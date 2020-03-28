@@ -7,7 +7,7 @@ class TweetReader:
 
     """
 
-    def __init__(self, tweets_filepath):
+    def __init__(self, tweets_filepath, rank, size):
         """
 
         Args:
@@ -15,6 +15,8 @@ class TweetReader:
         """
         self.tweets_filepath = tweets_filepath
         self.header = None
+        self.size = size
+        self.rank = rank
 
     def header_info(self):
         """
@@ -36,9 +38,10 @@ class TweetReader:
         with open(self.tweets_filepath, encoding='utf-8') as file:
             # store the header
             self.header = file.readline()
-            for line in file:
-                data = self.to_json(line)
-                yield data
+            for i, line in enumerate(file):
+                if i % self.size == self.rank:
+                    data = self.to_json(line)
+                    yield data
 
     @staticmethod
     def to_json(string: str):
