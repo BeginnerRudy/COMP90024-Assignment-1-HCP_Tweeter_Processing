@@ -1,5 +1,5 @@
 from mpi4py import MPI
-from TweetReader import TweetReader
+from Utility import TweetReader
 import numpy as np
 import re
 
@@ -7,7 +7,7 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
-tinnyTweetsReader = TweetReader("../data/tinyTwitter.json", rank, size)
+tinnyTweetsReader = TweetReader("../data/nanoTwitter.json", rank, size)
 tinnyTweets = tinnyTweetsReader.read_line_skip_header()
 
 # A = 0
@@ -32,4 +32,4 @@ tinnyTweets = tinnyTweetsReader.read_line_skip_header()
 
 counter = 0
 for tweet in tinnyTweets:
-    print("rank: %d. Hashtags: %s" % (rank, re.findall(r"#(\w+)", tweet['doc']['text'])))
+    print("rank: %d. Text: %s" % (rank, tweet['doc']['text']))

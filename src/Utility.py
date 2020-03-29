@@ -17,6 +17,7 @@ class TweetReader:
         self.header = None
         self.size = size
         self.rank = rank
+        self.step = size - 1
 
     def header_info(self):
         """
@@ -38,31 +39,30 @@ class TweetReader:
         with open(self.tweets_filepath, encoding='utf-8') as file:
             # store the header
             self.header = file.readline()
-            for i, line in enumerate(file):
-                if i % self.size == self.rank:
-                    data = self.to_json(line)
-                    yield data
+            # skip first rank line for each process, to make sure every line get read exactly only once.
+            self.skip_n_lines(self.rank, file)
+
+            for line in file:
+                try:
+                    # Truncate the valid JSON string for all lines except the last 2 lines
+                    yield json.loads(line[:-2])
+                except json.decoder.JSONDecodeError:
+                    try:
+                        # Truncate the valid JSON string for all lines except the 2nd last line
+                        yield json.loads(line)
+                    except json.decoder.JSONDecodeError:
+                        # Ignore the last line, since it does not contain any data.
+                        pass
+                self.skip_n_lines(self.step, file)
 
     @staticmethod
-    def to_json(string: str):
+    def skip_n_lines(n, file):
         """
-        This function takes a json string as input and return the parsed json object.
-        There are 2 assumptions here:
-            1. For the last line l, l[:-3] is a valid JSON string.
-            2. For other lines p, p[:-2] is a valid JSON string.
+        This function aims to skip given n lines from the given file
 
         Args:
-            string (): The Json string to be parsed.
-
-        Returns:
-            The parsed json object.
+            n (int): The number of lines to skip
+            file (File): The file object to manipulate
         """
-        # not last line
-        try:
-            # Truncate the valid JSON string for all lines except the last line
-            return json.loads(string[:-2])
-
-        # last line
-        except json.decoder.JSONDecodeError:
-            # Truncate the valid JSON string for the last line
-            return json.loads(string[:-3])
+        for i in range(n):
+            file.readline()
