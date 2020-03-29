@@ -1,4 +1,5 @@
 import json
+import re
 
 
 class TweetReader:
@@ -52,3 +53,18 @@ class TweetReader:
                         except json.decoder.JSONDecodeError:
                             # Ignore the last line, since it does not contain any data.
                             pass
+
+    @staticmethod
+    def get_hash_tag(string):
+        """
+        This function aims to extract and lower casing hashtags from the given string and return as a list.
+        Note:  A hashtag is a string following a # that ends with a space or any
+            punctuation (except for underscore _ )
+
+        Args:
+            string ([str]): The string given to extract
+
+        Returns:
+            A list of lower cased hashtags.
+        """
+        return [x.lower() for x in re.findall(r"#(\w+)", string)]

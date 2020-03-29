@@ -1,35 +1,24 @@
 from mpi4py import MPI
 from Utility import TweetReader
 import numpy as np
-import re
+from collections import defaultdict
+from collections import Counter
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
-tinnyTweetsReader = TweetReader("../data/nanoTwitter.json", rank, size)
+tinnyTweetsReader = TweetReader("../data/smallTwitter.json", rank, size)
 tinnyTweets = tinnyTweetsReader.read_line_skip_header()
 
-# A = 0
-#
-# if rank == 0:
-#     tinnyTweetsReader = TweetReader("../data/nanoTwitter.json")
-#     tinnyTweets = tinnyTweetsReader.read_line_skip_header()
-#     worker_id = 1
-#     for tweet in tinnyTweets:
-#         comm.send(tweet, dest = worker_id)
-#         worker_id += 1
-#         worker_id %= size
-# else:
-#     tweet = comm.recv(source=0)
-#     print("rank % d : %s" % (rank, tweet['doc']['text']))
 
-# hash-tags, country codes, iso_language_code, lang,
-
-# user is nested
-# metadata contains language_code
-# entities caontains hashtags
-
-counter = 0
+# counter = Counter()
+counter = defaultdict(int)
 for tweet in tinnyTweets:
-    print("rank: %d. Text: %s" % (rank, tweet['doc']['text']))
+    ha =  TweetReader.get_hash_tag(tweet['doc']['text'])
+    for h in ha:
+        counter[h] += 1
+
+import operator
+sorted_x = sorted(counter.items(), key=operator.itemgetter(1), reverse=True)
+print(sorted_x)
