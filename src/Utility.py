@@ -40,29 +40,15 @@ class TweetReader:
             # store the header
             self.header = file.readline()
             # skip first rank line for each process, to make sure every line get read exactly only once.
-            self.skip_n_lines(self.rank, file)
-
-            for line in file:
-                try:
-                    # Truncate the valid JSON string for all lines except the last 2 lines
-                    yield json.loads(line[:-2])
-                except json.decoder.JSONDecodeError:
+            for i, line in enumerate(file):
+                if i % self.size == self.rank:
                     try:
-                        # Truncate the valid JSON string for all lines except the 2nd last line
-                        yield json.loads(line)
+                        # Truncate the valid JSON string for all lines except the last 2 lines
+                        yield json.loads(line[:-2])
                     except json.decoder.JSONDecodeError:
-                        # Ignore the last line, since it does not contain any data.
-                        pass
-                self.skip_n_lines(self.step, file)
-
-    @staticmethod
-    def skip_n_lines(n, file):
-        """
-        This function aims to skip given n lines from the given file
-
-        Args:
-            n (int): The number of lines to skip
-            file (File): The file object to manipulate
-        """
-        for i in range(n):
-            file.readline()
+                        try:
+                            # Truncate the valid JSON string for all lines except the 2nd last line
+                            yield json.loads(line)
+                        except json.decoder.JSONDecodeError:
+                            # Ignore the last line, since it does not contain any data.
+                            pass
