@@ -6,6 +6,8 @@ from collections import Counter
 import operator
 import argparse
 from heapq import nlargest
+from timeit import default_timer as timer
+
 
 def main():
     """
@@ -35,6 +37,7 @@ class Job:
         self.size = comm.Get_size()
 
     def exec(self):
+
         tinny_tweets_reader = TweetReader(self.tweets_file_path, self.rank, self.size)
         tinny_tweets = tinny_tweets_reader.read_tweets()
 
@@ -53,8 +56,9 @@ class Job:
         hashtag_data = self.comm.gather(hashtag_counter, root=0)
         lang_data = self.comm.gather(lang_counter, root=0)
 
-        # # phase 2: parallel combine the result
+        # phase 2: parallel combine the result
         if self.rank == 0:
+            start = timer()
             hashtag_final_dict = defaultdict(int)
             for dict_ in hashtag_data:
                 for key, value in dict_.items():
@@ -64,17 +68,15 @@ class Job:
             for dict_ in lang_data:
                 for key, value in dict_.items():
                     lang_final_dict[key] += value
-            # sorted_hashtag = sorted(hashtag_final_dict.items(), key=operator.itemgetter(1), reverse=True)
-            # sorted_lang = sorted(lang_final_dict.items(), key=operator.itemgetter(1), reverse=True)
-
+            sorted_hashtag = sorted(hashtag_final_dict.items(), key=operator.itemgetter(1), reverse=True)
+            sorted_lang = sorted(lang_final_dict.items(), key=operator.itemgetter(1), reverse=True)
             # # phase 3: show the final result
-            res_hashtag = nlargest(10, hashtag_final_dict, key=hashtag_final_dict.get)
-            res_lang = nlargest(10, lang_final_dict, key=lang_final_dict.get)
-            print(res_hashtag)
-            print(res_lang)
-            # print(sorted_hashtag[:10])
-            # print(sorted_lang[:10])
-            # print("Total number of Tweets: %d" % count)
+            print(sorted_hashtag[:10])
+            print(sorted_lang[:10])
+            end = timer()
+            print(start)
+            print("Total summarizing time: %lf " % (end - start))
+        # print("Total number of Tweets: %d" % count)
 
 
 if __name__ == "__main__":

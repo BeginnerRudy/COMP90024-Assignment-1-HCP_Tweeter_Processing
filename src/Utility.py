@@ -77,7 +77,7 @@ class TweetReader:
         Returns:
             A list of lower cased hashtags.
         """
-        return [x.lower() for x in re.findall(r"#(\w+)", string)]
+        return [x.lower() for x in re.findall(r"#([a-zA-Z0-9_]+)", string)]
 
     @staticmethod
     def get_lang_code(tweet):
