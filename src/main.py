@@ -37,6 +37,7 @@ class Job:
         self.size = comm.Get_size()
 
     def exec(self):
+        start = timer()
 
         tinny_tweets_reader = TweetReader(self.tweets_file_path, self.rank, self.size)
         tinny_tweets = tinny_tweets_reader.read_tweets()
@@ -56,8 +57,15 @@ class Job:
         hashtag_data = self.comm.gather(hashtag_counter, root=0)
         lang_data = self.comm.gather(lang_counter, root=0)
 
+        # ...
+        end = timer()
+        read_and_process = end - start
+
+        read_time_data = self.comm.gather(read_and_process, root=0)
+
         # phase 2: parallel combine the result
         if self.rank == 0:
+            read_time_data = max(read_time_data)
             start = timer()
             hashtag_final_dict = defaultdict(int)
             for dict_ in hashtag_data:
@@ -73,10 +81,10 @@ class Job:
             # # phase 3: show the final result
             print(sorted_hashtag[:10])
             print(sorted_lang[:10])
+            print("\n\nTotal phase 1 time: %lf." % read_time_data)
             end = timer()
-            print(start)
             print("Total summarizing time: %lf " % (end - start))
-        # print("Total number of Tweets: %d" % count)
+        print("Total number of Tweets: %d" % count)
 
 
 if __name__ == "__main__":
