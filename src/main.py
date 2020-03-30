@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections import Counter
 import operator
 import argparse
-
+from heapq import nlargest
 
 def main():
     """
@@ -36,28 +36,45 @@ class Job:
 
     def exec(self):
         tinny_tweets_reader = TweetReader(self.tweets_file_path, self.rank, self.size)
-        tinny_tweets = tinny_tweets_reader.read_line_skip_header()
+        tinny_tweets = tinny_tweets_reader.read_tweets()
 
         # phase 1: read, extract and count info
         # counter = Counter()
-        # hashtag_counter = defaultdict(int)
-        # lang_counter = defaultdict(int)
+        hashtag_counter = defaultdict(int)
+        lang_counter = defaultdict(int)
         count = 0
         for tweet in tinny_tweets:
-            # ha = TweetReader.get_hash_tag(tweet['doc']['text'])
-            # for h in ha:
-            #     hashtag_counter[h] += 1
-            # lang_counter[TweetReader.get_lang_code(tweet)] += 1
+            ha = TweetReader.get_hash_tag(tweet['doc']['text'])
+            for h in ha:
+                hashtag_counter[h] += 1
+            lang_counter[TweetReader.get_lang_code(tweet)] += 1
             count += 1
 
+        hashtag_data = self.comm.gather(hashtag_counter, root=0)
+        lang_data = self.comm.gather(lang_counter, root=0)
+
         # # phase 2: parallel combine the result
-        # sorted_x = sorted(hashtag_counter.items(), key=operator.itemgetter(1), reverse=True)
-        # sorted_lang = sorted(lang_counter.items(), key=operator.itemgetter(1), reverse=True)
-        #
-        # # phase 3: show the final result
-        # print(sorted_x[:10])
-        # print(sorted_lang[:10])
-        print("Total number of Tweets: %d" % count)
+        if self.rank == 0:
+            hashtag_final_dict = defaultdict(int)
+            for dict_ in hashtag_data:
+                for key, value in dict_.items():
+                    hashtag_final_dict[key] += value
+
+            lang_final_dict = defaultdict(int)
+            for dict_ in lang_data:
+                for key, value in dict_.items():
+                    lang_final_dict[key] += value
+            # sorted_hashtag = sorted(hashtag_final_dict.items(), key=operator.itemgetter(1), reverse=True)
+            # sorted_lang = sorted(lang_final_dict.items(), key=operator.itemgetter(1), reverse=True)
+
+            # # phase 3: show the final result
+            res_hashtag = nlargest(10, hashtag_final_dict, key=hashtag_final_dict.get)
+            res_lang = nlargest(10, lang_final_dict, key=lang_final_dict.get)
+            print(res_hashtag)
+            print(res_lang)
+            # print(sorted_hashtag[:10])
+            # print(sorted_lang[:10])
+            # print("Total number of Tweets: %d" % count)
 
 
 if __name__ == "__main__":

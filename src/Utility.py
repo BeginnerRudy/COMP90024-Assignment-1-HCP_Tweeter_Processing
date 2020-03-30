@@ -41,7 +41,7 @@ class TweetReader:
             pass
         return self.tweets_file.tell()  # return the current position of the file
 
-    def read_line_skip_header(self):
+    def read_tweets(self):
         """
         This function would create a generator for parsing the JSON file line by line.
         In this way, we do not need to load the whole file into the RAM, which provides
