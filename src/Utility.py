@@ -1,5 +1,6 @@
 import json
 import re
+import os
 
 
 class TweetReader:
@@ -14,21 +15,31 @@ class TweetReader:
         Args:
             tweets_filepath (): The filepath of the tweet JSON file.
         """
-        self.tweets_filepath = tweets_filepath
-        self.header = None
+        self.tweets_file = open(tweets_filepath, 'r')
         self.size = size
         self.rank = rank
-        self.step = size - 1
 
-    def header_info(self):
-        """
-        This function aims to extract useful information from the header.
-        Currently, just return the raw header string, later modify needed.
+        # partition the  file, get partition size in bytes
+        file_size = os.fstat(self.tweets_file.fileno()).st_size  # The file size in bytes
+        partition_size = file_size / size
 
-        Returns:
-            The raw header string.
-        """
-        return self.header
+        # partition file based on rank roughly
+        rough_start = int(partition_size * rank)
+        rough_end = int(partition_size * (rank + 1))
+
+        # align to the next newline, since we could simply ignore the 1st line of JSON file
+        self.file_start = self.go_to_next_line(rough_start)
+        self.file_end = self.go_to_next_line(rough_end)
+
+        # set file to the current start position
+        self.tweets_file.seek(self.file_start)
+
+    def go_to_next_line(self, offset):
+        self.tweets_file.seek(offset)  # set file to offset
+        # keep read util reach a newline or EOF
+        while self.tweets_file.read(1) not in ['', '\n']:
+            pass
+        return self.tweets_file.tell()  # return the current position of the file
 
     def read_line_skip_header(self):
         """
@@ -37,22 +48,21 @@ class TweetReader:
         nice memory efficiency.
 
         """
-        with open(self.tweets_filepath, encoding='utf-8') as file:
-            # store the header
-            self.header = file.readline()
-            # skip first rank line for each process, to make sure every line get read exactly only once.
-            for i, line in enumerate(file):
-                if i % self.size == self.rank:
-                    try:
-                        # Truncate the valid JSON string for all lines except the last 2 lines
-                        yield json.loads(line[:-2])
-                    except json.decoder.JSONDecodeError:
-                        try:
-                            # Truncate the valid JSON string for all lines except the 2nd last line
-                            yield json.loads(line)
-                        except json.decoder.JSONDecodeError:
-                            # Ignore the last line, since it does not contain any data.
-                            pass
+        # skip first rank line for each process, to make sure every line get read exactly only once.
+        while self.tweets_file.tell() < self.file_end:
+            line = self.tweets_file.readline()
+            try:
+                # Truncate the valid JSON string for all lines except the last 2 lines
+                yield json.loads(line[:-2])
+            except json.decoder.JSONDecodeError:
+                try:
+                    # Truncate the valid JSON string for all lines except the 2nd last line
+                    yield json.loads(line)
+                except json.decoder.JSONDecodeError:
+                    # Ignore the last line, since it does not contain any data.
+                    pass
+
+        self.tweets_file.close()
 
     @staticmethod
     def get_hash_tag(string):

@@ -35,22 +35,29 @@ class Job:
         self.size = comm.Get_size()
 
     def exec(self):
-        tinny_tweets_reader = TweetReader("../data/smallTwitter.json", self.rank, self.size)
+        tinny_tweets_reader = TweetReader(self.tweets_file_path, self.rank, self.size)
         tinny_tweets = tinny_tweets_reader.read_line_skip_header()
 
+        # phase 1: read, extract and count info
         # counter = Counter()
-        hashtag_counter = defaultdict(int)
-        lang_counter = defaultdict(int)
+        # hashtag_counter = defaultdict(int)
+        # lang_counter = defaultdict(int)
+        count = 0
         for tweet in tinny_tweets:
-            ha = TweetReader.get_hash_tag(tweet['doc']['text'])
-            for h in ha:
-                hashtag_counter[h] += 1
-            lang_counter[TweetReader.get_lang_code(tweet)] += 1
+            # ha = TweetReader.get_hash_tag(tweet['doc']['text'])
+            # for h in ha:
+            #     hashtag_counter[h] += 1
+            # lang_counter[TweetReader.get_lang_code(tweet)] += 1
+            count += 1
 
-        sorted_x = sorted(hashtag_counter.items(), key=operator.itemgetter(1), reverse=True)
-        sorted_lang = sorted(lang_counter.items(), key=operator.itemgetter(1), reverse=True)
-        print(sorted_x[:10])
-        print(sorted_lang[:10])
+        # # phase 2: parallel combine the result
+        # sorted_x = sorted(hashtag_counter.items(), key=operator.itemgetter(1), reverse=True)
+        # sorted_lang = sorted(lang_counter.items(), key=operator.itemgetter(1), reverse=True)
+        #
+        # # phase 3: show the final result
+        # print(sorted_x[:10])
+        # print(sorted_lang[:10])
+        print("Total number of Tweets: %d" % count)
 
 
 if __name__ == "__main__":
