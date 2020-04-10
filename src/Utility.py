@@ -1,6 +1,8 @@
 import json
 import re
 import os
+import csv
+from collections import defaultdict
 
 
 class TweetReader:
@@ -82,3 +84,24 @@ class TweetReader:
     @staticmethod
     def get_lang_code(tweet):
         return tweet['doc']['metadata']['iso_language_code']
+
+def lang_codes_to_dict(filepath):
+    """
+    Convert a csv file of language codes to a dictionary
+
+    Args:
+        filepath: The filepath to the csv file
+
+    Returns:
+        A dictionary where key is a language code and value is its full name
+    """
+    reader = csv.DictReader(open(filepath, 'r'))
+    lang_dict = defaultdict(str)
+
+    for line in reader:
+        if 'alpha2' in line:
+            lang_dict[line['alpha2']] = line['English']
+        if 'alpha3-b' in line:
+            lang_dict[line['alpha3-b']] = line['English']
+    
+    return lang_dict
