@@ -50,7 +50,7 @@ class TweetReader:
         nice memory efficiency.
 
         """
-        # skip first rank line for each process, to make sure every line get read exactly only once.
+
         while self.tweets_file.tell() < self.file_end:
             line = self.tweets_file.readline()
             try:
