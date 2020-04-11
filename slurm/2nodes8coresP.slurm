@@ -11,12 +11,3 @@
 cd ../src
 module load Python/3.6.1-intel-2017.u2
 time mpirun python main.py ../../../bigTwitter.json
-
-/
-|-- src/
-|   |-- main.py
-|   |-- Utility.py
-|-- data/
-|-- slurm/
-|-- output/
-|-- test/

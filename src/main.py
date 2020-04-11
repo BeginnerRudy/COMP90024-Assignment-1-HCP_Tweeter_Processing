@@ -1,5 +1,5 @@
 from mpi4py import MPI
-from Utility import TweetReader
+from Utility import TweetReader, lang_codes_to_dict
 import numpy as np
 from collections import defaultdict
 from collections import Counter
@@ -16,14 +16,15 @@ def main():
     """
 
     # specify the parser usage
-    parser = argparse.ArgumentParser(usage='mpirun -n <number of processes>> python3 <python file> <tweet file path>')
+    parser = argparse.ArgumentParser(usage='mpirun -n <number of processes>> python3 <python file> <tweet file path> <lang codes file path>')
     parser.add_argument('twitterPath', type=str)
+    parser.add_argument('langcodesPath', type=str)
 
     # create the parser
     args = parser.parse_args()
 
     # create a job
-    job = Job(args.twitterPath, MPI.COMM_WORLD)
+    job = Job(args.twitterPath, args.langcodesPath, MPI.COMM_WORLD)
 
     # execute the job
     job.exec()
@@ -31,8 +32,9 @@ def main():
 
 class Job:
 
-    def __init__(self, tweets_file_path, comm):
+    def __init__(self, tweets_file_path, lang_codes_file_path, comm):
         self.tweets_file_path = tweets_file_path
+        self.lang_codes_file_path = lang_codes_file_path
         self.comm = comm
         self.rank = comm.Get_rank()
         self.size = comm.Get_size()
@@ -77,15 +79,30 @@ class Job:
             for dict_ in lang_data:
                 for key, value in dict_.items():
                     lang_final_dict[key] += value
-            sorted_hashtag = sorted(hashtag_final_dict.items(), key=operator.itemgetter(1), reverse=True)
-            sorted_lang = sorted(lang_final_dict.items(), key=operator.itemgetter(1), reverse=True)
+
+            sorted_hashtag = sorted(hashtag_final_dict.items(), key=operator.itemgetter(1), reverse=True)[:10]
+            sorted_lang = sorted(lang_final_dict.items(), key=operator.itemgetter(1), reverse=True)[:10]
+            
             # phase 3: show the final result
-            print(sorted_hashtag[:10])
+            # Print the top 10 tweeted hashtags
+            print("Top 10 Trending Hashtags:")
+            for i in range(10):
+                (hashtag, count) = sorted_hashtag[i]
+                print(f'{i+1}. #{hashtag}, {count:,d}')
+
+            # Get a dictionary of language codes to their corresponding languages
+            lan_code_dict = lang_codes_to_dict(self.lang_codes_file_path)
+
             # print(sorted_lang[:10])
-            print("\n\nTotal phase 1 time: %lf." % read_time_data)
-            end = timer()
-            print("Total summarizing time: %lf " % (end - start))
-        print("Total number of Tweets: %d" % count)
+            print("\nTop 10 Trending Languages:")
+            for i in range(10):
+                (lan_code, count) = sorted_lang[i]
+                print(f'{i+1}. {lan_code_dict[lan_code]} ({lan_code}), {count:,d}')
+            # print("\n\nTotal phase 1 time: %lf." % read_time_data)
+            # end = timer()
+            # print("Total summarizing time: %lf " % (end - start))
+        # print("Total number of Tweets: %d" % count)
+
 
 
 if __name__ == "__main__":
