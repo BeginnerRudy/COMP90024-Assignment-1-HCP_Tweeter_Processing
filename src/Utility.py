@@ -37,11 +37,13 @@ class TweetReader:
         self.tweets_file.seek(self.file_start)
 
     def go_to_next_line(self, offset):
-        self.tweets_file.seek(offset)  # set file to offset
+        # set file current position to offset
+        self.tweets_file.seek(offset)
         # keep read util reach a newline or EOF
         while self.tweets_file.read(1) not in ['', '\n']:
             pass
-        return self.tweets_file.tell()  # return the current position of the file
+        # return the current position of the file
+        return self.tweets_file.tell()
 
     def read_tweets(self):
         """
@@ -58,7 +60,7 @@ class TweetReader:
                 yield json.loads(line[:-2])
             except json.decoder.JSONDecodeError:
                 try:
-                    # Truncate the valid JSON string for all lines except the 2nd last line
+                    # Truncate the valid JSON string for the 2nd last line
                     yield json.loads(line)
                 except json.decoder.JSONDecodeError:
                     # Ignore the last line, since it does not contain any data.
