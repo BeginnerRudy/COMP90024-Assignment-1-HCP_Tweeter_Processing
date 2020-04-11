@@ -1,6 +1,8 @@
 <component name="ProjectDictionaryState">
   <dictionary name="rudy">
     <words>
+      <w>mpirun</w>
+      <w>ntasks</w>
       <w>slurm</w>
     </words>
   </dictionary>

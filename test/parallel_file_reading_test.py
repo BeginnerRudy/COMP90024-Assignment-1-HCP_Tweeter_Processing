@@ -8,7 +8,7 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 
 tinnyTweetsReader = TweetReader("testData/testSmall.json", rank, size)
-tinnyTweets = tinnyTweetsReader.read_line_skip_header()
+tinnyTweets = tinnyTweetsReader.read_tweets()
 
 # let each processes read its own tweet's index
 tweet_indies = []

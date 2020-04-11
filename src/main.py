@@ -9,6 +9,7 @@ from heapq import nlargest
 from timeit import default_timer as timer
 
 
+
 def main():
     """
     This function is used to combine all single steps together to do the multi-process parallel computing.
@@ -78,9 +79,9 @@ class Job:
                     lang_final_dict[key] += value
             sorted_hashtag = sorted(hashtag_final_dict.items(), key=operator.itemgetter(1), reverse=True)
             sorted_lang = sorted(lang_final_dict.items(), key=operator.itemgetter(1), reverse=True)
-            # # phase 3: show the final result
+            # phase 3: show the final result
             print(sorted_hashtag[:10])
-            print(sorted_lang[:10])
+            # print(sorted_lang[:10])
             print("\n\nTotal phase 1 time: %lf." % read_time_data)
             end = timer()
             print("Total summarizing time: %lf " % (end - start))
