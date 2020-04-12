@@ -4,7 +4,7 @@ from collections import defaultdict
 import operator
 import argparse
 
-
+import time
 
 def main():
     """
@@ -38,7 +38,7 @@ class Job:
 
 
     def exec(self):
-
+        start_time = time.time()
         tinny_tweets_reader = TweetReader(self.tweets_file_path, self.rank, self.size)
         tinny_tweets = tinny_tweets_reader.read_tweets()
 
@@ -60,6 +60,8 @@ class Job:
 
         # phase 2: parallel combine the result
         if self.rank == 0:
+            phase1_time = time.time()
+            print("---phase 1 %s seconds ---" % (phase1_time - start_time))
             hashtag_final_dict = defaultdict(int)
             for dict_ in hashtag_data:
                 for key, value in dict_.items():
@@ -87,6 +89,8 @@ class Job:
             for i in range(10):
                 (lan_code, count) = sorted_lang[i]
                 print(f'{i+1}. {lan_code_dict[lan_code]} ({lan_code}), {count:,d}')
+
+            print("---phase 2 %s seconds ---" % (time.time() - phase1_time))
 
 
 
